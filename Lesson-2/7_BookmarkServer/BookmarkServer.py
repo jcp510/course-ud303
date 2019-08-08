@@ -84,7 +84,7 @@ def CheckURI(uri, timeout=5):
     # Return false if GET request raised exception.
     # (Why is this not 'requests.exceptions.RequestException'?)
     except requests.RequestException:
-        return false
+        return False
 
 class Shortener(http.server.BaseHTTPRequestHandler):
     # Write code inside do_GET that sends a 303 redirect to a known name.
@@ -128,7 +128,10 @@ class Shortener(http.server.BaseHTTPRequestHandler):
             # 3. Serve a 400 error with a useful message.
             self.send_response(400)
             self.send_header('Content-type', 'text/plain; charset=utf-8')
-            
+            self.end_headers()
+            self.wfile.write('Missing required fields!')
+            return
+
         longuri = params["longuri"][0]
         shortname = params["shortname"][0]
 
@@ -137,15 +140,22 @@ class Shortener(http.server.BaseHTTPRequestHandler):
             memory[shortname] = longuri
 
             # 4. Serve a redirect to the root page (the form).
-            #    Delete the following line.
-            raise NotImplementedError("Step 4 isn't written yet!")
+            # Write the code inside do_POST that sends a 303 redirect to the form after saving a newly
+            # submitted URI.
+            self.send_response(303)
+            self.send_header('Location', '/')
+            self.end_headers()
+
         else:
+            # 5. Write the code inside do_POST that sends a 404 error if a URI is not successfully
+            # checked (i.e. if CheckURI returns false).
             # Didn't successfully fetch the long URI.
-
+            self.send_response(404)
+            self.send_header('Content-type', 'text/plain; charset=utf-8')
+            self.end_headers()
             # 5. Send a 404 error with a useful message.
-            #    Delete the following line.
-            raise NotImplementedError("Step 5 isn't written yet!")
-
+            self.wfile.write('Sorry, could not fetch "{}"!'.format(longuri).encode())
+            
 if __name__ == '__main__':
     server_address = ('', 8000)
     httpd = http.server.HTTPServer(server_address, Shortener)
