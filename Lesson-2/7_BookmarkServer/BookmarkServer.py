@@ -66,7 +66,8 @@ form = '''<!DOCTYPE html>
 </pre>
 '''
 
-
+# 1. Write the CheckURI function, which takes a URI and returns True if a
+#    request to that URI returns a 200 OK, and False otherwise.
 def CheckURI(uri, timeout=5):
     '''Check whether this URI is reachable, i.e. does it return a 200 OK?
 
@@ -74,11 +75,19 @@ def CheckURI(uri, timeout=5):
     False if that GET request returns any other response, or doesn't return
     (i.e. times out).
     '''
-    # 1. Write this function.  Delete the following line.
-    raise NotImplementedError("Step 1 isn't written yet.")
 
+    try:
+        r = requests.get(uri, timeout=timeout)
+        # Check if returned GET request is 200 OK.
+        return r.status_code == 200
+
+    # Return false if GET request raised exception.
+    # (Why is this not 'requests.exceptions.RequestException'?)
+    except requests.RequestException:
+        return false
 
 class Shortener(http.server.BaseHTTPRequestHandler):
+    # Write code inside do_GET that sends a 303 redirect to a known name.
     def do_GET(self):
         # A GET request will either be for / (the root path) or for /some-name.
         # Strip off the / and we have either empty string or a name.
@@ -87,8 +96,10 @@ class Shortener(http.server.BaseHTTPRequestHandler):
         if name:
             if name in memory:
                 # 2. Send a 303 redirect to the long URI in memory[name].
-                #    Delete the following line.
-                raise NotImplementedError("Step 2 isn't written yet.")
+                self.send_response(303)
+                self.send_header('Location', memory[name])
+                self.end_headers()
+                
             else:
                 # We don't know that name! Send a 404 error.
                 self.send_response(404)
@@ -105,6 +116,7 @@ class Shortener(http.server.BaseHTTPRequestHandler):
                               for key in sorted(memory.keys()))
             self.wfile.write(form.format(known).encode())
 
+    # Write code inside do_POST that sends a 400 error if the form fields are missing.
     def do_POST(self):
         # Decode the form data.
         length = int(self.headers.get('Content-length', 0))
@@ -114,9 +126,9 @@ class Shortener(http.server.BaseHTTPRequestHandler):
         # Check that the user submitted the form fields.
         if "longuri" not in params or "shortname" not in params:
             # 3. Serve a 400 error with a useful message.
-            #    Delete the following line.
-            raise NotImplementedError("Step 3 isn't written yet!")
-
+            self.send_response(400)
+            self.send_header('Content-type', 'text/plain; charset=utf-8')
+            
         longuri = params["longuri"][0]
         shortname = params["shortname"][0]
 

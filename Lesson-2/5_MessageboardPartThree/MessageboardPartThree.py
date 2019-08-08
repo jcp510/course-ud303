@@ -2,6 +2,8 @@
 #
 # Step two in building the messageboard server.
 #
+# Run python3 -m http.server 8000 in your terminal.
+#
 # Instructions:
 #   1. In the do_POST method, send a 303 redirect back to the / page.
 #   2. In the do_GET method, put the response together and send it.
@@ -31,6 +33,7 @@ class MessageHandler(BaseHTTPRequestHandler):
 
         # Read the correct amount of data from the request.
         data = self.rfile.read(length).decode()
+        
         # Extract the "message" field from the request data.
         message = parse_qs(data)["message"][0]
 
@@ -42,6 +45,16 @@ class MessageHandler(BaseHTTPRequestHandler):
 
         # 1. Send a 303 redirect back to the root page.
 
+        # Adds response header to headers buffer and logs accepted request.  
+        self.send_response(303)
+
+        # Adds HTTP header to internal buffer.
+        self.send_header('Location', '/')
+        
+        # Adds blank line (indicating end of HTTP headers in the response) to headers buffer and calls 
+        # flush_headers. 
+        self.end_headers()
+
     def do_GET(self):
         # First, send a 200 OK response.
         self.send_response(200)
@@ -51,9 +64,10 @@ class MessageHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
         # 2. Put the response together out of the form and the stored messages.
-
+        mesg = form.format('\n'.join(memory))
         # 3. Send the response.
-
+        self.wfile.write(mesg.encode())
+        
 if __name__ == '__main__':
     server_address = ('', 8000)
     httpd = HTTPServer(server_address, MessageHandler)
